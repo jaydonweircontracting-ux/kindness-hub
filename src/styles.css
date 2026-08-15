@@ -20,6 +20,11 @@
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
+  --color-ember: var(--ember);
+  --color-ash: var(--ash);
+  --color-grid-line: var(--grid-line);
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
@@ -144,5 +149,19 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+}
+
+@utility panel {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+}
+
+@utility hairline-grid {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
   }
 }
