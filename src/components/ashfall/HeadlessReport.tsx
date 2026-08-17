@@ -64,7 +64,7 @@ export function HeadlessReport() {
   );
 }
 
-function Row({ label, report }: { label: string; report?: Report }) {
+function Row({ label, report }: { label: string; report: Report | undefined }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-4 py-3">
       <span className="font-mono text-xs text-muted-foreground">{label}</span>
