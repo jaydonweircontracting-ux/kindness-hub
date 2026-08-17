@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { runHeadless, type HeadlessReport as Report } from "@/engine";
 
 /**
@@ -8,17 +8,20 @@ import { runHeadless, type HeadlessReport as Report } from "@/engine";
 export function HeadlessReport() {
   const [ticks, setTicks] = useState(10_000);
   const [runId, setRunId] = useState(0);
+  const [runs, setRuns] = useState<{ a: Report; b: Report; c: Report } | null>(null);
 
-  const { a, b, c } = useMemo(() => {
-    void runId;
-    return {
+  // Runs only in the browser: wall-clock timings differ per run, so rendering
+  // them during SSR would guarantee a hydration mismatch.
+  useEffect(() => {
+    setRuns({
       a: runHeadless(ticks, { seed: "ashfall" }),
       b: runHeadless(ticks, { seed: "ashfall" }),
       c: runHeadless(ticks, { seed: "emberfall" }),
-    };
+    });
   }, [ticks, runId]);
 
-  const deterministic = a.checksum === b.checksum && a.checksum !== c.checksum;
+  const deterministic =
+    runs !== null && runs.a.checksum === runs.b.checksum && runs.a.checksum !== runs.c.checksum;
 
   return (
     <div className="panel">
@@ -28,16 +31,18 @@ export function HeadlessReport() {
         </h2>
         <span
           className="font-mono text-xs uppercase tracking-widest"
-          style={{ color: deterministic ? "var(--ember)" : "var(--destructive)" }}
+          style={{
+            color: !runs ? "var(--ash)" : deterministic ? "var(--ember)" : "var(--destructive)",
+          }}
         >
-          {deterministic ? "deterministic" : "divergent"}
+          {!runs ? "running" : deterministic ? "deterministic" : "divergent"}
         </span>
       </div>
 
       <div className="divide-y divide-border">
-        <Row label='seed "ashfall" — run 1' report={a} />
-        <Row label='seed "ashfall" — run 2' report={b} />
-        <Row label='seed "emberfall"' report={c} />
+        <Row label='seed "ashfall" — run 1' report={runs?.a} />
+        <Row label='seed "ashfall" — run 2' report={runs?.b} />
+        <Row label='seed "emberfall"' report={runs?.c} />
       </div>
 
       <div className="flex gap-px border-t border-border bg-border">
@@ -59,15 +64,17 @@ export function HeadlessReport() {
   );
 }
 
-function Row({ label, report }: { label: string; report: Report }) {
+function Row({ label, report }: { label: string; report: Report | undefined }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-4 py-3">
       <span className="font-mono text-xs text-muted-foreground">{label}</span>
       <span className="font-mono text-sm" style={{ color: "var(--ember)" }}>
-        checksum {report.checksum.toString(16).padStart(8, "0")}
+        {report ? `checksum ${report.checksum.toString(16).padStart(8, "0")}` : "checksum ————————"}
       </span>
       <span className="font-mono text-xs text-muted-foreground">
-        {report.wallMs.toFixed(1)}ms · {Math.round(report.ticksPerSecond).toLocaleString()} ticks/s
+        {report
+          ? `${report.wallMs.toFixed(1)}ms · ${Math.round(report.ticksPerSecond).toLocaleString()} ticks/s`
+          : "—"}
       </span>
     </div>
   );
